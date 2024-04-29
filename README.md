@@ -1,10 +1,11 @@
 ![gamelogo](https://github.com/bathuchan/runfishrun/assets/80199404/49d72d1e-77c3-4376-8e9f-8efe3cb4c50b)
  A web game that I made for my web programming class.
  
-#Game Info:
+# Game Info:
 Move the clownfish with your mouse while avoiding the sharks. You can buy power-ups with your score from the shop.
 
-#Controls:
+# Controls:
+
 Mouse Movement: Fish Movement
 
 Q: Spawn Kill-All pick up :skull_and_crossbones: --> On pick up remove all of the sharks on the canvas.
