@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Follow Game with Spawner</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #25baff;
+            overflow: hidden;
+        }
+
+        p {
+            color: white;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            font-size: larger;
+        }
+
+        a {
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-style: italic
+        }
+
+
+        #gameCanvas {
+            display: block;
+            background-color: #67cdfdc4;
+            width: 100%;
+            height: 100%;
+        }
+
+        #timer {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            color: white;
+        }
+
+        #score {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            color: white;
+        }
+
+        #shop {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            color: white;
+            pointer-events: none;
+        }
+
+        .weeds {
+            display: flex;
+            justify-content: left;
+            pointer-events: none;
+        }
+
+        .weed {
+            flex: 0 0 40%;
+            transform: scale(0.4);
+            margin-right: -15rem;
+            margin-left: -30rem;
+
+        }
+
+        .item:last-child {
+            margin-right: 0;
+        }
+
+        #gameOverScreen {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="gameCanvas" style="display: none;cursor: none;"></canvas>
+
+    <!--Top Left shop elements-->
+    <img id="shop" src="images/boat.gif" type="image/gif" style="top: -9rem;left: 60%;scale: .5;">
+    <div id="shop">
+        <h2 style="color:   rgb(255, 245, 64); margin: 2%;">Shop:</h2>
+        Q - Spawn Kill-All , Price: 100, Max: 3 <br>
+        W - Go On Frenzy , Price: 20 per second<br>
+        E - Freeze-All , Price: 80
+    </div>
+
+    <!--Time & Score elements-->
+    <div id="timer" style="color: darkorange;font-size: 40px ;">Time: 00:00</div>
+    <div id="score" style="color: rgb(255, 209, 153);font-size: 40px ;">Score: 0</div>
+
+    <!--Bottom weed elements-->
+    <div class="weeds" style="position: absolute; bottom: -70px;">
+
+        <div class="weed"><img src="images/seaweed.gif" type="image/gif"></div>
+        <div class="weed"><img src="images/seaweed.gif" type="image/gif"></div>
+        <div class="weed"><img src="images/seaweed.gif" type="image/gif"></div>
+        <div class="weed"><img src="images/seaweed.gif" type="image/gif"></div>
+        <div class="weed"><img src="images/seaweed.gif" type="image/gif"></div>
+        <div class="weed"><img src="images/seaweed.gif" type="image/gif"></div>
+        <div class="weed"><img src="images/seaweed.gif" type="image/gif"></div>
+    </div>
+
+    <!--Gamestart Screen-->
+    <div id="startScreen" style="text-align: center; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+    background-color: rgba(0, 0, 0, 0.7); padding: 20px; border-radius: 10px;">
+        <h1 style="color: rgb(47, 0, 255);"><img src="images/gamelogo.gif" type="image/gif" width="512px"></h1>
+        <p>Move the <a style="color: orange;">clowfish</a> with your mouse while avoiding the <a
+                style="color: grey;font-style: italic">sharks</a>. You can buy <a
+                style="color: greenyellow;font-style: italic ;">power-ups</a> with your score from the <a
+                style="color:   rgb(255, 245, 64)">shop</a>.</p>
+        <h2 style="color: rgb(47, 0, 255);">Controls:</h2>
+        <p> Mouse Movement: Player Movement </p>
+        <p>Q: Spawn Kill-All pick up --> <img src="images/killAll.png" type="image/png" height="32px">: On pick up
+            removes all of the sharks on the canvas .</p>
+        <p>W: Go On Frenzy --> <img src="images/fish1scared.png" type="image/png" height="32px"> <img
+                src="images/playerFrenzy.png" type="image/png" height="32px">: Within activation clownfish is able to
+            eat
+            the sharks.</p>
+        <p>E: Freeze-All --> <img src="images/fish1frozen.png" type="image/png" height="22px"> <img
+                src="images/fish1frozen.png" type="image/png" height="32px">
+            <img src="images/fish1frozen.png" type="image/png" height="24px">: With activation all of the sharks freeze
+            and become destroyable.
+        </p>
+        <button id="startButton"
+            style="padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Start
+            Game</button>
+    </div>
+
+    <!--Gameover Screen-->
+    <div id="gameOverScreen">
+        <h1 style="color: rgb(231, 63, 63);">Game Over</h1>
+        <p style="color: rgb(0, 255, 55);">Your score: <span id="finalScore" style="font-weight: bold;">0</span></p>
+        <p style="color: white;">Time survived: <span id="survivalTime" style="font-weight: bold;">0:00</span></p>
+        <button id="restartButton"
+            style="padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Restart
+            Game</button>
+    </div>
+
+    <!--Game sound elements-->
+    <audio id="gameMusic" loop>
+        <source src="sfx/sharkattack.mp3" type="audio/mp3">
+    </audio>
+    <audio id="underwaterLoop" loop>
+        <source src="sfx/underwaterloop.mp3" type="audio/mp3">
+    </audio>
+    <audio id="deathFX">
+        <source src="sfx/sharkdeath.mp3" type="audio/mp3">
+    </audio>
+    <audio id="killallSFX">
+        <source src="sfx/killallSFX.mp3" type="audio/mp3">
+    </audio>
+    <audio id="freezeSFX">
+        <source src="sfx/freezeSFX.mp3" type="audio/mp3">
+    </audio>
+    <audio id="iceShatter">
+        <source src="sfx/iceshatter.mp3" type="audio/mp3">
+    </audio>
+    <audio id="chompSFX">
+        <source src="sfx/chomp.mp3" type="audio/mp3">
+    </audio>
+    <audio id="killallSpawnSFX">
+        <source src="sfx/killallSpawnSFX.mp3" type="audio/mp3">
+    </audio>
+
+
+    <script>
+        // Game elements
+        var canvas = document.getElementById("gameCanvas");
+        var weed = document.getElementById("weed");
+
+        var gameOverScreen = document.getElementById("gameOverScreen");
+        var ctx = canvas.getContext("2d");
+        var timerElement = document.getElementById("timer");
+        var scoreElement = document.getElementById("score");
+        var survivalTimeElement = document.getElementById("survivalTime");
+        var finalScoreElement = document.getElementById("finalScore");
+
+        // Game images
+        fish1 = new Image();
+        fish1.src = "images/fish1.png";
+        fish1.width = "32px";
+        fish1.height = "32px";
+
+        fish1Scared = new Image();
+        fish1Scared.src = "images/fish1scared.png";
+        fish1Scared.width = "32px";
+        fish1Scared.height = "32px";
+
+        fish1Frozen = new Image();
+        fish1Frozen.src = "images/fish1frozen.png";
+        fish1Frozen.width = "32px";
+        fish1Frozen.height = "32px";
+
+        killAll = new Image();
+        killAll.src = "images/killAll.png";
+        killAll.width = "32px";
+        killAll.height = "32px";
+
+        bubbleImage = new Image();
+        bubbleImage.src = "images/bubble.png";
+        bubbleImage.width = "32px";
+        bubbleImage.height = "32px";
+
+        playerImage = new Image();
+        playerImage.src = "images/player.png";
+        playerImage.width = "32px";
+        playerImage.height = "32px";
+
+        playerFrenzyImage = new Image();
+        playerFrenzyImage.src = "images/playerFrenzy.png";
+        playerFrenzyImage.width = "32px";
+        playerFrenzyImage.height = "32px";
+
+
+
+
+
+
+        const music = [document.getElementById("gameMusic"), document.getElementById("deathFX"), document.getElementById("iceShatter"),
+        document.getElementById("underwaterLoop"), document.getElementById("killallSFX"), document.getElementById("freezeSFX"), document.getElementById("chompSFX"), document.getElementById("killallSpawnSFX")];
+
+        // Function to play music
+        function playGameMusic(x) {
+            var gameMusic = music[x];
+            gameMusic.load();
+
+            var playPromise = gameMusic.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+
+                })
+                    .catch(error => {
+                        console.log("SoundError happened: " + error);
+                    });
+            }
+        }
+
+        // Function to pause music
+        function pauseGameMusic(x) {
+            var gameMusic = music[x];
+            gameMusic.pause();
+        }
+
+
+
+
+        // Function to resize the canvas to fit the window
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // Resize the canvas initially
+        resizeCanvas();
+
+
+        // Player object properties
+        var player = {
+            name: "player",
+
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 40,
+            image: playerImage,
+            color: "blue",
+            safeRadius: 150,
+            trail: []
+        };
+
+
+        var objects = [];
+        var powerUps = [];
+        var startTime;
+        var score = 0;
+
+        var gameStarted = false;
+
+        document.getElementById("startButton").addEventListener("click", resetGame);
+        function resetGame() {
+            playGameMusic(0);
+            playGameMusic(3);
+
+            startTime = Date.now();
+            score = 0;
+
+            document.getElementById("startScreen").style.display = "none ";
+            document.getElementById("gameOverScreen").style.display = "none";
+            document.getElementById("gameCanvas").style.display = "block";
+
+            gameStarted = true;
+            if (gameStarted) {
+                update();
+            }
+        }
+
+        // Update canvas on mouse movement
+        canvas.addEventListener("mousemove", function (event) {
+            var rect = canvas.getBoundingClientRect();
+            var mouseX = event.clientX - rect.left;
+            var mouseY = event.clientY - rect.top;
+
+            // Check if the cursor is near the border
+            if (mouseX < player.safeRadius) {
+                mouseX = player.safeRadius;
+            } else if (mouseX > canvas.width - player.safeRadius) {
+                mouseX = canvas.width - player.safeRadius;
+            }
+            if (mouseY < player.safeRadius) {
+                mouseY = player.safeRadius;
+            } else if (mouseY > canvas.height - player.safeRadius) {
+                mouseY = canvas.height - player.safeRadius;
+            }
+
+            // Update player position
+            player.x = mouseX;
+            player.y = mouseY;
+            player.trail.push({ x: player.x, y: player.y });
+        });
+
+        var fps = 60;//By this, game works the same on every refresh rate
+        var now;
+        var then = Date.now();
+        var interval = 1000 / fps;
+        var delta;
+
+        // Main update loop
+        function update() {
+
+            now = Date.now();
+            delta = now - then;
+            if (delta > interval) {//Cap the refresh rate
+                // Draw black border for playable area
+                ctx.fillStyle = "#25baff";
+
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.clearRect(player.safeRadius, player.safeRadius, canvas.width - 2 * player.safeRadius, canvas.height - 2 * player.safeRadius);
+                updateBubbles();
+                drawBubbles();
+                updateShards();
+
+                // Spawn red objects(in this example sharks) randomly
+                if (Math.random() < 0.02) { // Adjust spawn rate as needed
+                    spawnRedObject();
+                }
+
+                // Spawn power-up randomly
+                if (Math.random() < 0.0005) { // Adjust spawn rate as needed
+                    spawnPowerUp();
+
+                }
+
+                // Move red objects(in this example sharks)
+                moveRedObjects();
+
+                // Draw player
+                drawObject(player);
+
+                // Draw objects
+                for (var i = 0; i < objects.length; i++) {
+                    drawObject(objects[i]);
+                }
+
+                // Draw power-ups
+                for (var i = 0; i < powerUps.length; i++) {
+                    drawObject(powerUps[i]);
+                }
+
+                // Remove objects after their lifespan expires
+                for (var i = objects.length - 1; i >= 0; i--) {
+                    objects[i].lifespan -= 16.67; // Assuming 60 FPS, 1000ms/60 ~= 16.67ms per frame
+                    if (objects[i].lifespan <= 0) {
+                        score += 10; // Increase score when a red circle dies
+                        scoreElement.textContent = "Score: " + score;
+                        objects.splice(i, 1);
+                    }
+                }
+
+                // Check for collision between player and power-ups
+                for (var i = 0; i < powerUps.length; i++) {
+                    if (isColliding(player, powerUps[i])) {
+                        collectPowerUp(powerUps[i]);
+                    }
+                }
+
+                // Check for collision between player and red objects
+                for (var i = 0; i < objects.length; i++) {
+                    if (isColliding(player, objects[i]) && objects[i].name == "enemy") {
+                        if (!frenzyModeisOn && objects[i].frozen == false) { // Player can kill enemies only if "Frenzy" mode is not active
+                            console.log("Deathly collide");
+                            endGame();
+                            pauseGameMusic(0);
+                            playGameMusic(1);
+                            return; // Exit the update loop
+                        } else if (objects[i].frozen == true) { // Frozen red objects(in this example sharks)
+                            console.log("Frozen collide");
+                            playGameMusic(2);
+                            createShard(objects[i].x, objects[i].y, objects[i].size);
+                            createShard(objects[i].x, objects[i].y, objects[i].size);
+                            createShard(objects[i].x, objects[i].y, objects[i].size);
+                            createShard(objects[i].x, objects[i].y, objects[i].size);
+                            createShard(objects[i].x, objects[i].y, objects[i].size);
+                            objects.splice(i, 1);
+                            score += 5; // Increase score when a red circle dies(in this example sharks)
+                            scoreElement.textContent = "Score: " + score;
+                        }
+                        else {
+                            // Remove the enemy if clicked on it in "Frenzy" mode
+                            console.log("Frenzy degdi");
+                            playGameMusic(6);
+                            objects.splice(i, 1);
+                            score += 10; // Increase score when a red circle dies(in this example sharks)
+                            scoreElement.textContent = "Score: " + score;
+                        }
+                    }
+                }
+                // Update timer
+                updateTimer();
+
+                then = now - (delta % interval);
+            }
+            requestAnimationFrame(update);
+        }
+
+        // Function to spawn a red object
+        function spawnRedObject() {
+            // Maximum number of red circles to spawn(in this example sharks)
+            var maxRedCircles = 50;
+
+            // Check if the maximum number of red circles is reached(in this example sharks)
+            if (objects.length >= maxRedCircles) {
+                return; // Don't spawn more red circles(in this example sharks)
+            }
+
+            var x, y;
+            do {
+                x = Math.random() * canvas.width;
+                y = Math.random() * canvas.height;
+                var collision = false;
+                // Check if the newly generated position is too close to the player
+                if (Math.sqrt(Math.pow(x - player.x, 2) + Math.pow(y - player.y, 2)) < player.safeRadius + 50) {
+                    collision = true;
+                }
+                // Check collision with existing red objects
+                for (var i = 0; i < objects.length; i++) {
+                    if (isColliding({ x: x, y: y, size: 20 }, objects[i])) {
+                        collision = true;
+                        break;
+                    }
+                }
+            } while (!isInSafeZone(x, y) || collision); // Keep generating until the point is outside the safe zone and no collision
+
+            // Randomize lifespan to control speed of red circle
+            var lifespan = 1000 * (10 + Math.random() * 10); // Lifespan between 10 and 20 seconds
+
+            var imageHolder = new Image();
+
+            if (frenzyModeisOn) {// Change the image accordingly if the game in "Frenzy" mode
+                imageHolder = fish1Scared;
+            } else {
+                imageHolder = fish1;
+            }
+            var redObject = {
+                name: 'enemy',
+                frozen: false,
+                x: x,
+                y: y,
+                size: 30 + Math.random() * 30, // Random size between 30 and 60
+                speed: 1.8 + Math.random() * 1.4, // Random speed between 1.8 and 3.2
+                image: imageHolder,
+                lifespan: lifespan,
+                direction: Math.random() * Math.PI * 2, // Random initial direction
+                angularSpeed: Math.random() * 0.1 - 0.05, // Random angular speed
+                trail: []
+            };
+
+            objects.push(redObject);
+            redObject.trail.push({ x: redObject.x, y: redObject.y });
+        }
+
+        // Function to spawn a power-up
+        function spawnPowerUp() {
+            if (powerUps.length < 3) {
+                playGameMusic(7);
+                // Random position for the power-up
+                var x, y;
+                do {
+                    x = Math.random() * (canvas.width - 2 * player.safeRadius) + player.safeRadius;
+                    y = Math.random() * (canvas.height - 2 * player.safeRadius) + player.safeRadius;
+                } while (!isInSafeZone(x, y)); // Keep generating until the point is inside the safe zone
+
+                var powerUp = {
+                    name: 'killAll',
+                    x: x,
+                    y: y,
+                    size: 50,
+                    image: killAll,
+                    lifespan: 15000 // 15 seconds
+                };
+                powerUps.push(powerUp);
+            }
+        }
+
+        // Function to check if two circles are colliding
+        function isColliding(circle1, circle2) {
+            var dx = circle1.x - circle2.x;
+            var dy = circle1.y - circle2.y;
+            var distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < (circle1.size / 2 + circle2.size / 2);
+        }
+
+        // Function to check if a point is within the safe radius around the player
+        function isInSafeZone(x, y) {
+            var dx = x - player.x;
+            var dy = y - player.y;
+            var distance = Math.sqrt(dx * dx + dy * dy);
+            return distance >= player.safeRadius;
+        }
+
+        // Add a boolean variable to track "Frenzy" mode
+        var frenzyModeisOn = false;
+
+        // Listen for keydown event to toggle "Frenzy" mode
+        document.addEventListener("keydown", function (event) {
+            if (gameStarted) {
+                if (event.key === "q" || event.key === "Q") {
+                    // Player pressed the "Q" key
+
+                    // Check if the player can afford to buy the power-up
+                    if (score >= 100 && powerUps.length < 3) {
+                        spawnPowerUp();
+                        score -= 100; // Reduce 50 points for buying the power-up
+                        scoreElement.textContent = "Score: " + score;
+                    }
+
+                }
+                if (event.key === "w" || event.key === "W") {
+                    // Player pressed the "W" key
+                    if (score > 20) {
+                        score = score - 20;
+                        frenzyMode();// Gamemode changes to "Frenzy"
+                    }
+
+                }
+                if (event.key === "e" || event.key === "E") {
+                    // Player pressed the "E" key
+
+                    if (score >= 80) {
+                        playGameMusic(5);
+                        score = score - 80;// Reduce 80 points for buying the power-up
+                        scoreElement.textContent = "Score: " + score;
+
+                        for (var i = 0; i < objects.length; i++) {// Loop through all existing objects 
+                            if (objects[i].name === 'enemy') {//and update the enemies speed to 0 (Freeze all enemies)
+                                objects[i].image = fish1Frozen;//Update the enemies image accordingly
+                                objects[i].frozen = true;
+                                objects[i].speed = 0;
+
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // Add variables to track score decrease over time in Run Away mode
+        var scoreDecreaseInterval = 1000; // Decrease score every 5 seconds
+        var scoreDecreaseAmount = 20; // Amount to decrease the score
+        var scoreDecreaseTimer = null; // Timer reference
+
+        // Function to start the score decrease timer
+        function startScoreDecreaseTimer() {
+            scoreDecreaseTimer = setInterval(decreaseScoreOverTime, scoreDecreaseInterval);
+        }
+
+        // Function to stop the score decrease timer
+        function stopScoreDecreaseTimer() {
+            clearInterval(scoreDecreaseTimer);
+        }
+
+        // Function to decrease score over time
+        function decreaseScoreOverTime() {
+            score -= scoreDecreaseAmount;
+            if (score <= 0) {// Check score doesn't go negative
+                score = 0;
+                player.size = 40;//Decrease player's size
+                player.image = playerImage;//Update player image accordingly
+                for (var i = 0; i < objects.length; i++) {
+                    if (objects[i].frozen == false) {
+                        objects[i].image = fish1;//Update the enemies image accordingly
+                    }
+
+                }
+            }
+            scoreElement.textContent = "Score: " + score;
+        }
+
+        // Function to toggle "Frenzy" mode
+        function frenzyMode() {
+            frenzyModeisOn = !frenzyModeisOn;
+            if (frenzyModeisOn && score > 0) {
+                startScoreDecreaseTimer(); // Start score decrease timer when entering "Frenzy" mode
+                player.size = 70;//Increase player's size
+                player.image = playerFrenzyImage;//Update player image accordingly
+                for (var i = 0; i < objects.length; i++) {// Loop through all existing objects 
+                    if (objects[i].frozen == false) {
+                        objects[i].image = fish1Scared//Update the enemies image accordingly
+                    }
+
+                }
+            } else {
+                stopScoreDecreaseTimer(); // Stop score decrease timer when exiting "Frenzy" mode
+
+                player.size = 40;//Decrease player's size
+                player.image = playerImage;//Update player image accordingly
+                for (var i = 0; i < objects.length; i++) {
+                    if (objects[i].frozen == false) {// Loop through all existing objects 
+                        objects[i].image = fish1//Update the enemies image accordingly
+                    }
+
+                }
+
+            }
+        }
+
+        // Function to move enemies towards the player
+        function moveRedObjects() {
+            for (var i = 0; i < objects.length; i++) {// Loop through all existing objects 
+                var redObject = objects[i];
+
+                // Move away from player if "Frenzy" mode is active
+                if (frenzyModeisOn) {//Sharks movement on "Frenzy" mode
+
+                    if (score <= 0) { // Check the score is not below 0
+                        frenzyModeisOn = false;// Deactivate "Frenzy" mode
+                        stopScoreDecreaseTimer();// Deactivate Frenzy" mode
+                        score = 0;
+                        scoreElement.textContent = "Score: " + score;// Update score text accordingly
+                    }
+                    scoreElement.textContent = "Score: " + score;
+                    var dx = redObject.x - player.x;
+                    var dy = redObject.y - player.y;
+                    var distance = Math.sqrt(dx * dx + dy * dy);
+                    var speedFactor = redObject.speed * (0.5 + Math.random()); // Randomize speed slightly
+                    redObject.x += dx / distance * speedFactor;
+                    redObject.y += dy / distance * speedFactor;
+                }
+                // Move towards player if "Frenzy" mode is not active
+                else { //Sharks movement on "Normal" mode
+                    var dx = player.x - redObject.x;
+                    var dy = player.y - redObject.y;
+                    var distance = Math.sqrt(dx * dx + dy * dy);
+                    var speedFactor = redObject.speed * (0.5 + Math.random()); // Randomize speed slightly
+                    redObject.x += dx / distance * speedFactor;
+                    redObject.y += dy / distance * speedFactor;
+                }
+                redObject.trail.push({ x: redObject.x, y: redObject.y });
+
+
+                // Update direction
+                redObject.direction += redObject.angularSpeed;
+
+                // Wrap around the screen
+                if (redObject.x < 0) redObject.x = canvas.width;
+                if (redObject.x > canvas.width) redObject.x = 0;
+                if (redObject.y < 0) redObject.y = canvas.height;
+                if (redObject.y > canvas.height) redObject.y = 0;
+            }
+        }
+
+        // Function to draw an object(in this example sharks,player,powerups,trails)
+        function drawObject(object) {
+
+            if (object.name === 'enemy' && object.trail.length > 1) {
+                if (Math.random() < 0.007) { // Adjust spawn rate as needed
+                    createBubble2(object.x, object.y, object.size);// Draw bubbles in the trail for enemies
+
+                }
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'; // Adjust trail color and opacity
+                ctx.lineWidth = object.size / 7; // Adjust trail thickness
+                ctx.beginPath();// Starts drawing the trail
+                ctx.moveTo(object.trail[0].x, object.trail[0].y);
+                for (var i = 1; i < object.trail.length; i++) {
+                    ctx.lineTo(object.trail[i].x, object.trail[i].y);
+                    if (object.trail.length > object.speed * 10) {
+                        object.trail.splice(0, 1);
+                    }
+                }
+
+                if (frenzyModeisOn) {
+                    object.trail = [];
+                } else {
+                    ctx.stroke();
+                }
+
+            } else if (object.name === 'player' && object.trail.length > 1) {// Draw bubbles in the trail for player
+                if (Math.random() < 0.2) { // Adjust spawn rate as needed
+                    createBubble2(object.x, object.y, object.size);// Draw bubbles in the trail for player
+
+                }
+
+                ctx.strokeStyle = 'rgba(255, 165, 0, 0.1)'; // Adjust trail color and opacity
+                ctx.lineWidth = 8; // Adjust trail thickness
+                ctx.beginPath();// Starts drawing the trail
+                ctx.moveTo(object.trail[0].x, object.trail[0].y);
+                for (var i = 1; i < object.trail.length; i++) {
+                    ctx.lineTo(object.trail[i].x, object.trail[i].y);
+                    if (object.trail.length > 10) {
+                        object.trail.splice(0, 1);
+                    }
+                }
+                ctx.stroke();
+            }
+
+            if (object.name == 'enemy') {
+                // Calculate the rotation angle based on the direction of movement
+                var angle = Math.atan2(object.y - player.y, object.x - player.x);
+
+                // Save the current canvas state
+                ctx.save();
+
+                // Translate the canvas to the center of the object
+                ctx.translate(object.x, object.y);
+
+                // Rotate the canvas based on the calculated angle
+                ctx.rotate(angle);
+
+                // Draw the shark image centered with the correct size
+                ctx.drawImage(object.image, -object.size / 2, -object.size / 2, object.size, object.size);
+
+                // Restore the canvas state to its original state
+                ctx.restore();
+            } else if (object.name == 'killAll') {// Draw the powerup image centered with the correct size
+                ctx.drawImage(object.image, object.x - object.size / 2, object.y - object.size / 2, object.size, object.size);
+            } else if (object.name == 'player') {
+
+                ctx.drawImage(object.image, object.x - object.size / 2, object.y - object.size / 2, object.size, object.size);
+            } else if (object.name == 'enemyFrozen') {
+                var angle = Math.atan2(object.y - player.y, object.x - player.x);
+
+                // Save the current canvas state
+                ctx.save();
+
+                // Translate the canvas to the center of the object
+                ctx.translate(object.x, object.y);
+
+                // Draw the shark image centered with the correct size
+                ctx.rotate(angle);
+
+                // Draw the frozenshark image centered with the correct size
+                ctx.drawImage(object.image, -object.size / 2, -object.size / 2, object.size, object.size);
+            }
+            else {
+                // If no image, draw a simple colored circle - ErrorChecking
+                ctx.fillStyle = object.color;
+                ctx.beginPath();
+                ctx.arc(object.x, object.y, object.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Function to update the timer
+        function updateTimer() {
+            var elapsedTime = Math.floor((Date.now() - startTime) / 1000); // Elapsed time in seconds
+            var minutes = Math.floor(elapsedTime / 60);
+            var seconds = elapsedTime % 60;
+            timerElement.textContent = "Time: " + minutes.toString().padStart(2, '0') + ":" + seconds.toString().padStart(2, '0');
+        }
+
+        // Function to handle power-up collection
+        function collectPowerUp(powerUp) {
+            shakeScreen(20, 800);
+            playGameMusic(4);
+            // Remove all enemies(in this example sharks)
+            score += objects.length * 10;//Add score according the removed amount of enemies(in this example sharks)
+            objects = [];
+
+            // Remove the collected power-up
+            var index = powerUps.indexOf(powerUp);
+            if (index !== -1) {
+                powerUps.splice(index, 1);
+                scoreElement.textContent = "Score: " + score;
+            }
+        }
+        // Function to end the game
+        function endGame() {
+            gameStarted = false;
+
+            canvas.style.display = "none";
+            gameOverScreen.style.display = "block";
+            finalScoreElement.textContent = score;
+
+            var elapsedTime = Math.floor((Date.now() - startTime) / 1000); // Elapsed time in seconds
+            var minutes = Math.floor(elapsedTime / 60);
+            var seconds = elapsedTime % 60;
+            survivalTimeElement.textContent = minutes.toString().padStart(2, '0') + ":" + seconds.toString().padStart(2, '0');
+        }
+
+        document.getElementById("restartButton").addEventListener("click", refreshGame);
+
+        // Function to refresh the game
+        function refreshGame() {
+            location.reload();
+        }
+        // Resize canvas when the window is resized
+        window.addEventListener("resize", resizeCanvas);
+        //Screen shake animation
+        function shakeScreen(intensity, duration) {
+            var shakeInterval = setInterval(function () {
+                var offsetX = Math.random() * intensity - intensity / 2;
+                var offsetY = Math.random() * intensity - intensity / 2;
+                canvas.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+            }, 50);
+
+            setTimeout(function () {
+                clearInterval(shakeInterval);
+                canvas.style.transform = 'translate(0, 0)';
+            }, duration);
+        }
+        //Ice shatter particles
+        shardImages = [];
+        shard0 = new Image();
+        shard0.src = "images/shards/shard0.png";
+        shard0.width = "32px";
+        shard0.height = "32px";
+        shardImages.push(shard0);
+
+        shard1 = new Image();
+        shard1.src = "images/shards/shard1.png";
+        shard1.width = "32px";
+        shard1.height = "32px";
+        shardImages.push(shard1);
+
+        shard2 = new Image();
+        shard2.src = "images/shards/shard2.png";
+        shard2.width = "32px";
+        shard2.height = "32px";
+        shardImages.push(shard2);
+
+        shard3 = new Image();
+        shard3.src = "images/shards/shard3.png";
+        shard3.width = "64px";
+        shard3.height = "64px";
+        shardImages.push(shard3);
+
+        shard4 = new Image();
+        shard4.src = "images/shards/shard4.png";
+        shard4.width = "64px";
+        shard4.height = "64px";
+        shardImages.push(shard4);
+
+        var shards = [];
+
+        // Function to get random number in between given numbers
+        function getRandomInt(min, max) {
+            const minCeiled = max;
+            const maxFloored = min;
+            return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+        }
+        // Function to create a shards
+        function createShard(x, y, size) {
+
+            var shard = {
+                x: getRandomInt(-100, 100) + x,
+                y: getRandomInt(-100, 100) + y,
+                image: shardImages[getRandomInt(0, 4)],
+                size: Math.random() * size / 1.75, // Random radius between 10 and 30
+                velocity: Math.random() * 1 + 1 // Random velocity between 1 and 3
+            };
+            shards.push(shard);
+        }
+        // Function to animate a shards
+        function updateShards() {
+            for (var i = 0; i < shards.length; i++) {
+                var shard = shards[i];
+
+                ctx.drawImage(shard.image, shard.x, shard.y, shard.size, shard.size);
+
+                shard.y += shard.velocity;
+                if (shard.y + shard.radius >= canvas.height) {
+                    // Remove bubble if it goes out of the canvas
+                    shard.splice(i, 1);
+                    i--; // Decrement i because array length has decreased
+                }
+            }
+        }
+
+        var bubbles = [];
+
+        // Function to create a bubble
+        function createBubble() {
+
+            var bubble = {
+                x: Math.random() * canvas.width,
+                y: canvas.height,
+                image: bubbleImage,
+                size: Math.random() * 20 + 10, // Random radius between 10 and 30
+                velocity: Math.random() * 1 + .5 // Random velocity between 0.5 and 1.5
+            };
+            bubbles.push(bubble);
+        }
+        // Function to create a trail bubbles
+        function createBubble2(x, y, size) {
+            var bubble = {
+                x: x,
+                y: y,
+                image: bubbleImage,
+                size: size / 5, // Bubble size according the object's size
+                velocity: Math.random() * 1 + 1 // Random velocity between 1 and 2
+            };
+            bubbles.push(bubble);
+        }
+
+        // Function to animate bubbles
+        function updateBubbles() {
+            for (var i = 0; i < bubbles.length; i++) {
+                var bubble = bubbles[i];
+                bubble.y -= bubble.velocity;
+                if (bubble.y + bubble.radius < 0) {
+                    // Remove bubble if it goes out of the canvas
+                    bubbles.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        // Function to draw bubbles
+        function drawBubbles() {
+
+            // Create new bubble with a probability
+            if (Math.random() < 0.01) {
+                createBubble();
+
+            }
+
+            // Draw bubbles
+            for (var i = 0; i < bubbles.length; i++) {
+                var bubble = bubbles[i];
+                ctx.drawImage(bubble.image, bubble.x, bubble.y, bubble.size, bubble.size);
+            }
+        }
+    </script>
+</body>
+</html>
