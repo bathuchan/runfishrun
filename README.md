@@ -2,6 +2,7 @@
  A web game that I made for my web programming class project.
 
 PLAY THE GAME: runfishrun.great-site.net
+
 GAMELOOP VIDEO: https://youtu.be/tTPPY2-Wx5s
  
 # Game Info:
@@ -18,8 +19,10 @@ W: Go On Frenzy :japanese_ogre: --> Within activation, clownfish is able to eat 
 E: Freeze-All :ice_cube::ice_cube::ice_cube:-->  With activation, all of the sharks freeze and become destroyable.
 
 
--All used images and sounds are made by me.
+## All used images and sounds are made by me!
+
 Game Screen Shots:
+
 ![ss1](https://github.com/bathuchan/runfishrun/assets/80199404/a266345c-1893-4a6b-bc25-c85d6eb6429c)
 
 ![ss2](https://github.com/bathuchan/runfishrun/assets/80199404/e9a42906-737c-4b6a-8242-f36434715ef6)
