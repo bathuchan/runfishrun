@@ -5,10 +5,10 @@ PLAY THE GAME: runfishrun.great-site.net
 
 GAMELOOP VIDEO: https://youtu.be/tTPPY2-Wx5s
  
-# Game Info:
+## Game Info:
 Move the clownfish with your mouse while avoiding the sharks. You can buy power-ups with your score from the shop.
 
-# Controls:
+## Controls:
 
 Mouse Movement: Fish Movement
 
@@ -18,8 +18,8 @@ W: Go On Frenzy :japanese_ogre: --> Within activation, clownfish is able to eat 
 
 E: Freeze-All :ice_cube::ice_cube::ice_cube:-->  With activation, all of the sharks freeze and become destroyable.
 
-
-## All used images and sounds are made by me!
+> [!NOTE]
+> All used images and sounds are made by me!
 
 Game Screen Shots:
 
