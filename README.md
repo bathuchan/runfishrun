@@ -1,7 +1,7 @@
 ![gamelogo](https://github.com/bathuchan/runfishrun/assets/80199404/49d72d1e-77c3-4376-8e9f-8efe3cb4c50b)
  A web game that I made for my web programming class project.
 
-PLAY THE GAME: runfishrun.great-site.net
+PLAY THE GAME: https://bathuchan.github.io/runfishrun/index.html
 
 GAMELOOP VIDEO: https://youtu.be/tTPPY2-Wx5s
  
